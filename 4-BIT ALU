@@ -1,0 +1,87 @@
+4 bit ALU synthesis in vivaldo :
+'''
+`timescale 1ns / 1ps
+
+module alu(a, b, opcode, rslt);
+ //define inputs and outputs
+ input [7:0] a, b;
+ input [2:0] opcode;
+ output [7:0] rslt;
+ //variables are reg in always
+ reg [7:0] rslt;
+ reg [15:0] rslt_mul;
+ //define the opcodes
+ parameter add_op = 3'b000,
+ sub_op = 3'b001,
+ div_op = 3'b011,
+ mul_op = 3'b100;
+ //perform the arithmetic operations
+ always @ (a or b or opcode)
+ begin
+ case (opcode)
+ add_op : rslt = a + b;
+ sub_op : rslt = a - b;
+ div_op : rslt = a / b;
+ mul_op : rslt = a * b;
+ default : rslt = 0;
+ endcase
+ end
+ endmodule
+'''
+
+
+tb
+module alu_tb;
+
+    // Testbench signals
+    reg [7:0] a, b;         // 8-bit inputs
+    reg [2:0] opcode;       // 3-bit opcode
+    wire [7:0] rslt;        // 8-bit ALU result
+
+    // Instantiate the ALU
+    alu dut (
+        .a(a),
+        .b(b),
+        .opcode(opcode),
+        .rslt(rslt)
+    );
+
+    // Monitor output changes
+    initial begin
+        $monitor("Time=%0t | a=%d | b=%d | opcode=%b | rslt=%d", 
+                 $time, a, b, opcode, rslt);
+    end
+
+    // Stimulus generation
+    initial begin
+        // Initialize inputs
+        a = 0; 
+        b = 0; 
+        opcode = 3'b000; 
+
+        // Test addition (add_op = 3'b000)
+         a = 8'd10; b = 8'd5; opcode = 3'b000; // 10 + 5 = 15
+        #10 a = 8'd100; b = 8'd50; opcode = 3'b000; // 100 + 50 = 150
+
+        // Test subtraction (sub_op = 3'b001)
+        #10 a = 8'd20; b = 8'd5; opcode = 3'b001; // 20 - 5 = 15
+        #10 a = 8'd5; b = 8'd20; opcode = 3'b001; // 5 - 20 = -15 (2's complement)
+
+        // Test division (div_op = 3'b011)
+        #10 a = 8'd10; b = 8'd2; opcode = 3'b011; // 10 / 2 = 5
+        #10 a = 8'd30; b = 8'd6; opcode = 3'b011; // 30 / 6 = 5
+        // Be mindful: dividing by zero is undefined. If b=0, result might be X or 0.
+
+        // Test multiplication (mul_op = 3'b100)
+        #10 a = 8'd10; b = 8'd3; opcode = 3'b100; // 10 * 3 = 30
+        #10 a = 8'd15; b = 8'd10; opcode = 3'b100; // 15 * 10 = 150
+
+        // Test default case
+        #10 a = 8'd7; b = 8'd8; opcode = 3'b111; // Should produce 0
+
+        // Finish simulation
+        #10 $finish;
+    end
+
+endmodule 
+      tb waveform :         
